@@ -1,7 +1,7 @@
 require 'eunit_formatter'
 
 ERLC_TEST_FLAGS = "-pa ./ebin/eunit -I ./src -I ./test -I ./include/eunit -DTEST"
-ERLC_FLAGS = "+debug_info -W2 -o ./ebin -pa ./ebin"
+ERLC_FLAGS = "+debug_info -W2 -I ./include -o ./ebin -pa ./ebin"
 
 module Spec
   module Mate
