@@ -1,3 +1,5 @@
+require 'eunit_formatter'
+
 module Spec
   module Mate
     class Runner
@@ -22,6 +24,7 @@ module Spec
       def run(stdout, options)
         erl = `which erl`
         erl = "/opt/local/bin/erl"
+        erlc = "/opt/local/bin/erlc"
         #argv = options[:files].dup
         #argv << '--format'
         #argv << 'textmate'
@@ -33,16 +36,23 @@ module Spec
         #Dir.chdir(project_directory) do
         #  ::Spec::Runner::CommandLine.run(::Spec::Runner::OptionParser.parse(argv, STDERR, stdout))
         #end
-        
+        formatter = EunitFormatter.new(stdout)
+        counter = 1
         Dir.chdir(project_directory) do
+          formatter.start(options[:files].size)
           options[:files].each do |file|
             erlang_module = file.match(/test\/(.*)_test.erl/)[1]
-            test_output = `#{erl} -pa ebin ebin/eunit -run #{erlang_module} test -run init stop`
+            #stdout << "#{erl} -pa ebin -pa ebin/eunit -run #{erlang_module} test -run init stop"
+            formatter.add_example_group("Module #{erlang_module}")
+            test_output = `#{erl} -pa ebin -pa ebin/eunit -run #{erlang_module} test -run init stop`
+            formatter.example_started("#{erlang_module}")
             if /\*failed\*/ =~ test_output
-              puts "Failures in #{erlang_module}:\n#{test_output}"
+              #stdout << "Failures in #{erlang_module}:\n#{test_output}"
+              formatter.example_failed("#{erlang_module}", counter, "#{test_output}")
+              counter += 1
             else
               test_output[/1>\s*(.*)\n/]
-              puts "#{erlang_module}: #{$1}"
+              formatter.example_passed("#{erlang_module}")
             end
           end
         end
