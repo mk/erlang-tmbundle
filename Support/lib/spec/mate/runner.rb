@@ -1,5 +1,8 @@
 require 'eunit_formatter'
 
+ERLC_TEST_FLAGS = "-pa ./ebin/eunit -I ./src -I ./test -I ./include/eunit -DTEST"
+ERLC_FLAGS = "+debug_info -W2 -o ./ebin -pa ./ebin"
+
 module Spec
   module Mate
     class Runner
@@ -39,9 +42,11 @@ module Spec
         formatter = EunitFormatter.new(stdout)
         counter = 1
         Dir.chdir(project_directory) do
+          #stdout << options[:files].join('::::')
           formatter.start(options[:files].size)
           options[:files].each do |file|
             erlang_module = file.match(/test\/(.*)_test.erl/)[1]
+            stdout << `#{erlc} #{ERLC_FLAGS} #{ERLC_TEST_FLAGS} -v ./src/#{erlang_module}.erl`
             #stdout << "#{erl} -pa ebin -pa ebin/eunit -run #{erlang_module} test -run init stop"
             formatter.add_example_group("Module #{erlang_module}")
             test_output = `#{erl} -pa ebin -pa ebin/eunit -run #{erlang_module} test -run init stop`
