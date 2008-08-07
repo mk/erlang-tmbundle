@@ -34,6 +34,10 @@ module Spec
         counter = 1
         Dir.chdir(project_directory) do
           #stdout << options[:files].join('::::')
+          options[:files].each { |dir| 
+            options[:files] = options[:files] + files_in(dir) if File.directory?(dir)
+          }
+          options[:files] = options[:files].delete_if{ |file| File.directory?(file) }
           formatter.start(options[:files].size)
           options[:files].each do |file|
             normal_file_match = file.match(/src\/(.*).erl/)
@@ -73,6 +77,10 @@ module Spec
 
       def project_directory
         File.expand_path(ENV['TM_PROJECT_DIRECTORY'])
+      end
+      
+      def files_in(directory)
+        Dir.entries(directory).reject{ |name| name == "." and name == ".." }.collect{ |name| "#{directory}/#{name}"}
       end
     end
   end
