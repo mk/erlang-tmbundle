@@ -46,18 +46,30 @@ module Spec
           formatter.start(options[:files].size)
           options[:files].each do |file|
             erlang_module = file.match(/test\/(.*)_test.erl/)[1]
-            stdout << `#{erlc} #{ERLC_FLAGS} #{ERLC_TEST_FLAGS} -v ./src/#{erlang_module}.erl`
-            #stdout << "#{erl} -pa ebin -pa ebin/eunit -run #{erlang_module} test -run init stop"
+            compilation_output = `#{erlc} -pa ebin -pa ebin/eunit -pa ./ebin/eunit -I ./src -I ./test -I ./include -I ./include/eunit -DTEST ./src/#{erlang_module}.erl`
             formatter.add_example_group("Module #{erlang_module}")
-            test_output = `#{erl} -pa ebin -pa ebin/eunit -run #{erlang_module} test -run init stop`
-            formatter.example_started("#{erlang_module}")
-            if /\*failed\*/ =~ test_output
-              #stdout << "Failures in #{erlang_module}:\n#{test_output}"
-              formatter.example_failed("#{erlang_module}", counter, "#{test_output}")
+            abort_run = false
+            if /error/ =~ compilation_output
+              formatter.example_started("compilation")
+              formatter.example_failed("compilation", counter, "#{compilation_output}")
               counter += 1
-            else
-              test_output[/1>\s*(.*)\n/]
-              formatter.example_passed("#{erlang_module}")
+              abort_run = true
+            elsif /Warning/ =~ compilation_output
+              formatter.example_started("compilation")
+              formatter.example_pending("compilation", counter, "#{compilation_output}")
+              counter += 1
+            end
+            unless abort_run
+              test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/mysql -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -run #{erlang_module} test -run init stop`
+              formatter.example_started("#{erlang_module}")
+              if /\*failed\*/ =~ test_output or /error/ =~ test_output or /terminating/ =~ test_output
+                #stdout << "Failures in #{erlang_module}:\n#{test_output}"
+                formatter.example_failed("#{erlang_module}", counter, "#{test_output}")
+                counter += 1
+              else
+                test_output[/1>\s*(.*)\n/]
+                formatter.example_passed("#{erlang_module}")
+              end
             end
           end
         end

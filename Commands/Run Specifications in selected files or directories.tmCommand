@@ -21,6 +21,6 @@ Spec::Mate::Runner.new.run_files STDOUT
 	<key>scope</key>
 	<string>source.erlang</string>
 	<key>uuid</key>
-	<string>67E726E0-63E2-4840-B8BB-37F665CD34B8</string>
+	<string>67E726EC-63E2-4840-B8BB-37F665CD34B8</string>
 </dict>
 </plist>

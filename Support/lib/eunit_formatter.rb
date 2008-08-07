@@ -98,11 +98,22 @@ class EunitFormatter
     @output.flush
   end
 
-  def example_pending(example, message)
+  def example_pending(module_name, counter, message)
+    failure_style = 'failed'
     @output.puts "    <script type=\"text/javascript\">makeYellow('rspec-header');</script>" unless @header_red
+    @header_red = true
     @output.puts "    <script type=\"text/javascript\">makeYellow('example_group_#{current_example_group_number}');</script>" unless @example_group_red
+    @example_group_red = true
     move_progress
-    @output.puts "    <dd class=\"spec not_implemented\"><span class=\"not_implemented_spec_name\">#{h(example.description)} (PENDING: #{h(message)})</span></dd>"
+    @output.puts "    <dd class=\"spec #{failure_style}\">"
+    @output.puts "      <span class=\"failed_spec_name\">#{h(module_name)}</span>"
+    @output.puts "      <div class=\"failure\" id=\"failure_#{counter}\">"
+    @output.puts "        <div class=\"message\"><pre>#{h(message)}</pre></div>"
+    #@output.puts "        <div class=\"backtrace\"><pre>#{format_backtrace(failure.exception.backtrace)}</pre></div>" unless failure.exception.nil?
+    extra = ""
+    @output.puts extra unless extra == ""
+    @output.puts "      </div>"
+    @output.puts "    </dd>"
     @output.flush
   end
 
