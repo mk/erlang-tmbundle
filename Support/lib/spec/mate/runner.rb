@@ -1,7 +1,8 @@
 require 'eunit_formatter'
 
-ERLC_TEST_FLAGS = "-pa ./ebin/eunit -I ./src -I ./test -I ./include/eunit -DTEST"
-ERLC_FLAGS = "+debug_info -W2 -I ./include -o ./ebin -pa ./ebin"
+RUN_INCLUDE_PATHS = "-pa ./ebin -pa ./ebin/eunit -pa ./ebin/mochiweb -pa ./ebin/mysql -pa ./include -pa ./src"
+ERLC_TEST_FLAGS = "#{RUN_INCLUDE_PATHS} -I ./include -pa ./ebin/eunit -I . -I ./test -I ./include/eunit -DTEST"
+ERLC_FLAGS = "+debug_info -W2 -I ./include -o ./ebin -pa ./ebin -pa ./ebin/mochiweb"
 
 module Spec
   module Mate
@@ -28,28 +29,19 @@ module Spec
         erl = `which erl`
         erl = "/opt/local/bin/erl"
         erlc = "/opt/local/bin/erlc"
-        #argv = options[:files].dup
-        #argv << '--format'
-        #argv << 'textmate'
-        #if options[:line]
-        #  argv << '--line'
-        #  argv << options[:line]
-        #end
-        #argv += ENV['TM_RSPEC_OPTS'].split(" ") if ENV['TM_RSPEC_OPTS']
-        #Dir.chdir(project_directory) do
-        #  ::Spec::Runner::CommandLine.run(::Spec::Runner::OptionParser.parse(argv, STDERR, stdout))
-        #end
+
         formatter = EunitFormatter.new(stdout)
         counter = 1
         Dir.chdir(project_directory) do
           #stdout << options[:files].join('::::')
           formatter.start(options[:files].size)
           options[:files].each do |file|
-            erlang_module = file.match(/test\/(.*)_test.erl/)[1]
-            compilation_output = `#{erlc} -pa ebin -pa ebin/eunit -pa ./ebin/eunit -I ./src -I ./test -I ./include -I ./include/eunit -DTEST ./src/#{erlang_module}.erl`
+            normal_file_match = file.match(/src\/(.*).erl/)
+            erlang_module = normal_file_match.nil? ? file.match(/test\/(.*)_test.erl/)[1] : normal_file_match[1]
+            compilation_output = `#{erlc} #{ERLC_TEST_FLAGS} -o ./ebin ./src/#{erlang_module}.erl`
             formatter.add_example_group("Module #{erlang_module}")
             abort_run = false
-            if /error/ =~ compilation_output
+            if /error/ =~ compilation_output or /Error/ =~ compilation_output or /unbound/ =~ compilation_output or /undefined/ =~ compilation_output or /can't find/ =~ compilation_output
               formatter.example_started("compilation")
               formatter.example_failed("compilation", counter, "#{compilation_output}")
               counter += 1
@@ -63,7 +55,6 @@ module Spec
               test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/mysql -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -run #{erlang_module} test -run init stop`
               formatter.example_started("#{erlang_module}")
               if /\*failed\*/ =~ test_output or /error/ =~ test_output or /terminating/ =~ test_output
-                #stdout << "Failures in #{erlang_module}:\n#{test_output}"
                 formatter.example_failed("#{erlang_module}", counter, "#{test_output}")
                 counter += 1
               else
@@ -73,9 +64,6 @@ module Spec
             end
           end
         end
-        #Dir.chdir(project_directory) do
-        #  ::Spec::Runner::CommandLine.run()
-        #end
       end
 
       protected
