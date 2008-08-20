@@ -64,9 +64,7 @@ module Spec
               test_output.split("\n").each do |line|
                 if /done in / =~ line or /===========/ =~ line or /Succeeded:/ =~ line
                   # we ignore those lines
-                elsif /module/ =~ line
-                  formatter.example_started("#{erlang_module}")
-                elsif !(match = line.match(/\:(\w*?)_test\.\.\./)).nil?
+                elsif !(match = line.match(/\:(\w*?)_test.*\.\.\./)).nil?
                   test_name = match[1].gsub('_', ' ')
                   counter += 1
                   if started_failure_output
@@ -80,6 +78,8 @@ module Spec
                   else
                     started_failure_output = true
                   end
+                elsif /module/ =~ line
+                  #formatter.example_started("#{erlang_module}")
                 else
                   failure_output << line
                 end
