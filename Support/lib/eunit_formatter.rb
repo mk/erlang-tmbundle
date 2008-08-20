@@ -143,12 +143,8 @@ class EunitFormatter
   end
 
   def dump_summary(duration, example_count, failure_count, pending_count)
-    if dry_run?
-      totals = "This was a dry-run"
-    else
-      totals = "#{example_count} example#{'s' unless example_count == 1}, #{failure_count} failure#{'s' unless failure_count == 1}"
-      totals << ", #{pending_count} pending" if pending_count > 0  
-    end
+    totals = "#{example_count} example#{'s' unless example_count == 1}, #{failure_count} failure#{'s' unless failure_count == 1}"
+    totals << ", #{pending_count} pending" if pending_count > 0
     @output.puts "<script type=\"text/javascript\">document.getElementById('duration').innerHTML = \"Finished in <strong>#{duration} seconds</strong>\";</script>"
     @output.puts "<script type=\"text/javascript\">document.getElementById('totals').innerHTML = \"#{totals}\";</script>"
     @output.puts "</div>"

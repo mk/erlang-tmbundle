@@ -26,14 +26,15 @@ module Spec
       end
 
       def run(stdout, options)
+        @start_time = Time.now
         erl = `which erl`
         erl = "/opt/local/bin/erl"
         erlc = "/opt/local/bin/erlc"
-
+        
         formatter = EunitFormatter.new(stdout)
-        counter = 1
+        counter = 0
+        failed_counter = 0
         Dir.chdir(project_directory) do
-          #stdout << options[:files].join('::::')
           options[:files].each { |dir| 
             options[:files] = options[:files] + files_in(dir) if File.directory?(dir)
           }
@@ -56,21 +57,46 @@ module Spec
               counter += 1
             end
             unless abort_run
-              test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/mysql -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -run #{erlang_module} test -run init stop`
-              formatter.example_started("#{erlang_module}")
-              if /\*failed\*/ =~ test_output or /error/ =~ test_output or /terminating/ =~ test_output
-                formatter.example_failed("#{erlang_module}", counter, "#{test_output}")
-                counter += 1
-              else
-                test_output[/1>\s*(.*)\n/]
-                formatter.example_passed("#{erlang_module}")
+              test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/mysql -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -s util test_module #{erlang_module} -run init stop`
+              started_failure_output = false
+              failure_output = []
+              test_name = ''
+              test_output.split("\n").each do |line|
+                if /done in / =~ line or /===========/ =~ line or /Succeeded:/ =~ line
+                  # we ignore those lines
+                elsif /module/ =~ line
+                  formatter.example_started("#{erlang_module}")
+                elsif !(match = line.match(/\:(\w*?)_test\.\.\./)).nil?
+                  test_name = match[1].gsub('_', ' ')
+                  counter += 1
+                  if started_failure_output
+                    formatter.example_failed(test_name, counter, failure_output.join("\n"))
+                    failed_counter += 1
+                    failure_output = []
+                  end
+                  if /...ok/ =~ line
+                    formatter.example_passed(test_name)
+                    started_failure_output = false
+                  else
+                    started_failure_output = true
+                  end
+                else
+                  failure_output << line
+                end
               end
+              @end_time = Time.now
+              formatter.dump_summary(duration, counter, failed_counter, 0)
             end
           end
         end
       end
 
       protected
+      def duration
+        return @end_time - @start_time unless (@end_time.nil? or @start_time.nil?)
+        return "0.0"
+      end
+      
       def single_file
         File.expand_path(ENV['TM_FILEPATH'])
       end
