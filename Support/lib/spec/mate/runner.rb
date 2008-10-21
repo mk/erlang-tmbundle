@@ -65,13 +65,13 @@ module Spec
                 if /done in / =~ line or /===========/ =~ line or /Succeeded:/ =~ line
                   # we ignore those lines
                 elsif !(match = line.match(/\:(\w*?)_test.*\.\.\./)).nil?
-                  test_name = match[1].gsub('_', ' ')
                   counter += 1
                   if started_failure_output
                     formatter.example_failed(test_name, counter, failure_output.join("\n"))
                     failed_counter += 1
                     failure_output = []
                   end
+                  test_name = match[1].gsub('_', ' ')
                   if /...ok/ =~ line
                     formatter.example_passed(test_name)
                     started_failure_output = false
