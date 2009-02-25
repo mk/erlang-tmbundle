@@ -30,11 +30,16 @@ module Spec
         doc_dir = "#{ENV['TM_PROJECT_DIRECTORY']}/doc/edoc"
         `mkdir -p "#{doc_dir}"`
         Dir.chdir(doc_dir) do
-          `#{erl} -noshell -s init stop -run edoc files "#{ENV['TM_FILEPATH']}"`
-          if result = ""
+          result = `#{erl} -noshell -s init stop -run edoc files "#{ENV['TM_FILEPATH']}"`
+          if result == ""
             doc_file = doc_dir + "/" + File.basename(ENV['TM_FILEPATH'], ".erl") + ".html"
             f = File.new(doc_file)
             puts f.readlines
+          else
+            puts "<h1>Error</h1>"
+            result.each_line do |line|
+              puts "#{line}<br/>"
+            end            
           end
         end
       end
