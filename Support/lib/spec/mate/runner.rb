@@ -1,6 +1,6 @@
 require 'eunit_formatter'
 
-RUN_INCLUDE_PATHS = "-pa ./ebin -pa ./ebin/eunit -pa ./ebin/mochiweb -pa ./ebin/mysql -pa ./include -pa ./src"
+RUN_INCLUDE_PATHS = "-pa ./ebin -pa ./ebin/eunit -pa ./ebin/mochiweb -pa ./ebin/edbi -pa ./include -pa ./src"
 ERLC_TEST_FLAGS = "#{RUN_INCLUDE_PATHS} -I ./include -pa ./ebin/eunit -I . -I ./test -I ./include/eunit -DTEST"
 ERLC_FLAGS = "+debug_info -W2 -I ./include -o ./ebin -pa ./ebin -pa ./ebin/mochiweb"
 
@@ -57,7 +57,7 @@ module Spec
               counter += 1
             end
             unless abort_run
-              test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/mysql -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -s util test_module #{erlang_module} -run init stop`
+              test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/edbi -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -s util test_module #{erlang_module} -run init stop`
               started_failure_output = false
               failure_output = []
               test_name = ''
