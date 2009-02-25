@@ -24,6 +24,20 @@ module Spec
         options.merge!({:files => [single_file], :line => ENV['TM_LINE_NUMBER']})
         run(stdout, options)
       end
+      
+      def run_edoc(stdout, options={})
+        erl = "/opt/local/bin/erl"
+        doc_dir = "#{ENV['TM_PROJECT_DIRECTORY']}/doc/edoc"
+        `mkdir -p "#{doc_dir}"`
+        Dir.chdir(doc_dir) do
+          `#{erl} -noshell -s init stop -run edoc files "#{ENV['TM_FILEPATH']}"`
+          if result = ""
+            doc_file = doc_dir + "/" + File.basename(ENV['TM_FILEPATH'], ".erl") + ".html"
+            f = File.new(doc_file)
+            puts f.readlines
+          end
+        end
+      end
 
       def run(stdout, options)
         @start_time = Time.now
