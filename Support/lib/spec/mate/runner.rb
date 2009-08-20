@@ -53,6 +53,7 @@ module Spec
         formatter = EunitFormatter.new(stdout)
         counter = 0
         failed_counter = 0
+        skipped_counter = 0
         Dir.chdir(project_directory) do
           options[:files].each { |dir| 
             options[:files] = options[:files] + files_in(dir) if File.directory?(dir)
@@ -83,7 +84,14 @@ module Spec
               test_output.split("\n").each do |line|
                 if /done in / =~ line or /===========/ =~ line or /Succeeded:/ =~ line
                   # we ignore those lines
-                elsif !(match = line.match(/\:(\w*?)_test.*\.\.\./)).nil?
+                  formatter.example_failed(test_name, counter, failure_output.join("\n")) if started_failure_output
+                  started_failure_output = false
+                  failure_output = []
+                elsif /tests were cancelled/ =~ line
+                  formatter.example_failed("TESTS CANCELED", counter, line)
+                elsif line == "*failed*"
+                  started_failure_output = true
+                elsif !(match = line.match(/\:\s*(\w*)_test.*\.\.\./)).nil?
                   counter += 1
                   if started_failure_output
                     formatter.example_failed(test_name, counter, failure_output.join("\n"))
@@ -91,20 +99,30 @@ module Spec
                     failure_output = []
                   end
                   test_name = match[1].gsub('_', ' ')
-                  if /...ok/ =~ line
+                  formatter.example_started(test_name)
+                  if /_test.*\.\.\..*ok$/ =~ line
                     formatter.example_passed(test_name)
                     started_failure_output = false
-                  else
+                  elsif /_test.*\.\.\..*\*failed\*$/ =~ line
+                    started_failure_output = true
+                  elsif /_test.*\.\.\..*\*skipped\*$/ =~ line
+                    test_name += " (SKIPPED)"
+                    skipped_counter += 1
                     started_failure_output = true
                   end
-                elsif /module/ =~ line
+                elsif /module '.*'$/ =~ line
                   #formatter.example_started("#{erlang_module}")
                 else
                   failure_output << line
                 end
               end
               @end_time = Time.now
-              formatter.dump_summary(duration, counter, failed_counter, 0)
+              # print last failure
+              if started_failure_output
+                formatter.example_failed(test_name, counter, failure_output.join("\n")) 
+                failed_counter += 1
+              end
+              formatter.dump_summary(duration, counter, failed_counter, skipped_counter)
             end
           end
         end

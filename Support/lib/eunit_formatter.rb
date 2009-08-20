@@ -99,7 +99,7 @@ class EunitFormatter
   end
 
   def example_pending(module_name, counter, message)
-    failure_style = 'failed'
+    failure_style = 'not_implemented'
     @output.puts "    <script type=\"text/javascript\">makeYellow('rspec-header');</script>" unless @header_red
     @header_red = true
     @output.puts "    <script type=\"text/javascript\">makeYellow('example_group_#{current_example_group_number}');</script>" unless @example_group_red
@@ -143,9 +143,10 @@ class EunitFormatter
   end
 
   def dump_summary(duration, example_count, failure_count, pending_count)
+    @output.puts "    <script type=\"text/javascript\">moveProgressBar('100');</script>"
     totals = "#{example_count} example#{'s' unless example_count == 1}, #{failure_count} failure#{'s' unless failure_count == 1}"
     totals << ", #{pending_count} pending" if pending_count > 0
-    @output.puts "<script type=\"text/javascript\">document.getElementById('duration').innerHTML = \"Finished in <strong>#{duration} seconds</strong>\";</script>"
+    @output.puts "<script type=\"text/javascript\">document.getElementById('duration').innerHTML = \"Finished in <strong>#{duration.to_s} seconds</strong>\";</script>"
     @output.puts "<script type=\"text/javascript\">document.getElementById('totals').innerHTML = \"#{totals}\";</script>"
     @output.puts "</div>"
     @output.puts "</div>"
@@ -209,10 +210,6 @@ EOF
 function moveProgressBar(percentDone) {
   document.getElementById("rspec-header").style.width = percentDone +"%";
 }
-function makeRed(element_id) {
-  document.getElementById(element_id).style.background = '#C40D0D';
-  document.getElementById(element_id).style.color = '#FFFFFF';
-}
 
 function makeYellow(element_id) {
   if (element_id == "rspec-header" && document.getElementById(element_id).style.background != '#C40D0D')
@@ -226,6 +223,12 @@ function makeYellow(element_id) {
     document.getElementById(element_id).style.color = '#000000';
   }
 }
+
+function makeRed(element_id) {
+  document.getElementById(element_id).style.background = '#C40D0D';
+  document.getElementById(element_id).style.color = '#FFFFFF';
+}
+
 EOF
   end
         
