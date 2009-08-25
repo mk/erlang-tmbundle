@@ -112,6 +112,11 @@ module Spec
                   end
                 elsif /module '.*'$/ =~ line
                   #formatter.example_started("#{erlang_module}")
+                elsif /\[\d+(\.\d+)? s\] ok$/ =~ line 
+                  # if test traces messages, the ok message comes at the end and
+                  # looks like that: [3.016 s] ok
+                  formatter.example_passed(test_name)
+                  started_failure_output = false
                 else
                   failure_output << line
                 end
