@@ -63,14 +63,13 @@ module Spec
           options[:files].each do |file|
             normal_file_match = file.match(/src\/(.*).erl/)
             erlang_module = normal_file_match.nil? ? file.match(/test\/(.*)_test.erl/)[1] : normal_file_match[1]
-            compilation_output = `#{erlc} #{ERLC_TEST_FLAGS} -o ./ebin ./src/#{erlang_module}.erl`
+            compilation_output = `#{erlc} #{ERLC_TEST_FLAGS} -o ./ebin ./src/#{erlang_module}.erl` 
+            abort_run  = $? != 0
             formatter.add_example_group("Module #{erlang_module}")
-            abort_run = false
-            if /error/ =~ compilation_output or /Error/ =~ compilation_output or /unbound/ =~ compilation_output or /undefined/ =~ compilation_output or /can't find/ =~ compilation_output
+            if abort_run
               formatter.example_started("compilation")
               formatter.example_failed("compilation", counter, "#{compilation_output}")
               counter += 1
-              abort_run = true
             elsif /Warning/ =~ compilation_output
               formatter.example_started("compilation")
               formatter.example_pending("compilation", counter, "#{compilation_output}")
