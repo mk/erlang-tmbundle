@@ -77,7 +77,7 @@ module Spec
               counter += 1
             end
             unless abort_run
-              test_output = `#{erl} +K true -pz ./test -pz ./ebin/ -pa ./ebin/eunit -pa ./ebin/edbi -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -s util test_module #{erlang_module} -run init stop`
+              test_output = `#{erl} +K true -pz ./test -pa ./ebin/ -pa ./ebin/eunit -pa ./ebin/edbi -pa ./ebin/mochiweb -s mnesia start -sname master2 -noshell -s util test_module #{erlang_module} -run init stop`
               started_failure_output = false
               failure_output = []
               test_name = ''
