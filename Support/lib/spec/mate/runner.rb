@@ -62,8 +62,13 @@ module Spec
           formatter.start(options[:files].size)
           options[:files].each do |file|
             normal_file_match = file.match(/src\/(.*).erl/)
-            erlang_module = normal_file_match.nil? ? file.match(/test\/(.*)_test.erl/)[1] : normal_file_match[1]
-            compilation_output = `#{erlc} #{ERLC_TEST_FLAGS} -o ./ebin ./src/#{erlang_module}.erl` 
+            if normal_file_match.nil? && file.match(/test\/(.*)_test.erl/).nil? && !file.match(/test\/(.*).erl/).nil?
+              erlang_module = file.match(/test\/(.*).erl/)[1]
+              compilation_output = `#{erlc} #{ERLC_TEST_FLAGS} -o ./ebin ./test/#{erlang_module}.erl` 
+            else
+              erlang_module = normal_file_match.nil? ? file.match(/test\/(.*)_test.erl/)[1] : normal_file_match[1]
+              compilation_output = `#{erlc} #{ERLC_TEST_FLAGS} -o ./ebin ./src/#{erlang_module}.erl` 
+            end
             abort_run  = $? != 0
             formatter.add_example_group("Module #{erlang_module}")
             if abort_run
